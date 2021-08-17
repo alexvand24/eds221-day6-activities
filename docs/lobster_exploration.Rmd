@@ -1,0 +1,143 @@
+---
+title: "Lobster Exploration"
+author: "Alex Vand"
+date: "8/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+```{r}
+lobsters <- read.csv(here::here("data", "Lobster_Abundance_All_Years_20210412.csv"), na = c("-99999", "")) %>%
+  clean_names() %>% 
+  uncount(count)
+```
+
+
+```{r}
+summary_lobsters <- lobsters %>% 
+  group_by(site, year) %>%
+  summarize(total_count = n(), mean_carapace_length = mean(size_mm))
+
+lobster_plot <- ggplot(data = summary_lobsters,
+                       aes(x = year,
+                           y = total_count)) +
+  geom_line(aes(color = site))
+
+lobster_plot
+```
+
+```{r}
+lobsters_2020 <- lobsters %>% 
+  filter(year == 2020) %>% 
+  mutate(legal = case_when(
+    size_mm >= 79.76 ~ "yes",
+    size_mm < 79.76 ~ "no"
+  ))
+
+legal_lobsters <- lobsters_2020 %>% 
+  group_by(site, legal) %>% 
+  summarize(count = n())
+
+
+# lobsters_2020 %>% 
+#  count(site, legal)
+
+ggplot(data = legal_lobsters, aes(x = site,
+                                  y = count)) +
+  geom_col(aes(color = legal),
+           position = "fill")
+```
+
+## `filter()` practice
+
+```{r}
+ex_a <- lobsters %>% 
+  filter(site %in% c("IVEE", "CARP", "NAPL"))
+
+unique(ex_a$site)
+```
+```{r}
+ex_b <- lobsters %>% 
+  filter(month == 8)
+
+unique(ex_b$month)
+```
+
+```{r}
+ex_c <- lobsters %>% 
+  filter(site == "AQUE" | size_mm > 70)
+```
+
+```{r}
+ex_d <- lobsters %>% 
+  filter(!site == "NAPL")
+
+unique(ex_d$site)
+```
+
+## `group_by() %>% summarize()` practice
+
+```{r}
+ex_e <- lobsters %>% 
+  group_by(site) %>% 
+  summarize(mean_length = mean(size_mm, na.rm = TRUE),
+            sd_length = sd(size_mm, na.rm = TRUE))
+```
+
+```{r}
+ex_f <- lobsters %>% 
+  group_by(site, month) %>% 
+  summarize(max_length = max(size_mm, na.rm = TRUE),
+            min_length = min(size_mm, na.rm = TRUE))
+```
+
+## `mutate()` practice
+
+```{r}
+ex_g <- lobsters %>% 
+  mutate(length_cm = size_mm / 10)
+```
+
+```{r}
+ex_h <- lobsters %>% 
+  mutate(site_lower_case = tolower(site))
+
+unique(ex_h$site_lower_case)
+```
+
+```{r}
+ex_i <- lobsters %>% 
+  mutate(area_chr = as.character(area, na.rm = TRUE))
+
+class(ex_i$area_chr)
+```
+
+## `case_when()` practice
+
+```{r}
+ex_j <- lobsters %>% 
+  mutate(size_bin = case_when(
+    size_mm <= 70 ~ "small",
+    size_mm > 70 ~ "large"
+  ))
+```
+
+
+```{r}
+ex_k <- lobsters %>% 
+  mutate(designations = case_when(
+    site == "IVEE" | site == "NAPL" ~ "MPA",
+    TRUE ~ "not MPA"
+  ))
+```
+
+
+
+
+
